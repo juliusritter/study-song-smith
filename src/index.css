@@ -2,41 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* StudySongs Design System - Music-inspired gradients and modern aesthetics */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core theme colors */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Brand colors - Music-inspired purples and blues */
+    --primary: 258 89% 66%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 197 71% 73%;
+    --accent-foreground: 240 10% 3.9%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 258 89% 66%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Custom gradients for StudySongs */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(258 89% 66%) 0%, hsl(197 71% 73%) 50%, hsl(280 83% 70%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(240 3.7% 15.9%) 0%, hsl(240 5% 18%) 100%);
+    
+    /* Glassmorphism effects */
+    --glass-bg: hsla(240, 10%, 15%, 0.7);
+    --glass-border: hsla(0, 0%, 100%, 0.1);
+    
+    /* Music-themed colors */
+    --beat-purple: 280 83% 70%;
+    --rhythm-blue: 197 71% 73%;
+    --melody-pink: 320 91% 80%;
+    
+    /* Upload zone colors */
+    --upload-bg: 240 5% 18%;
+    --upload-border: 258 89% 66%;
+    --upload-hover: 258 89% 76%;
 
     --sidebar-background: 0 0% 98%;
 
@@ -101,5 +120,50 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, hsl(240 10% 3.9%) 0%, hsl(240 5% 6%) 100%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+  }
+  
+  .gradient-text {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .upload-zone {
+    background: hsl(var(--upload-bg));
+    border: 2px dashed hsl(var(--upload-border));
+    transition: all 0.3s ease;
+  }
+  
+  .upload-zone:hover {
+    border-color: hsl(var(--upload-hover));
+    background: hsl(var(--upload-bg) / 0.8);
+  }
+  
+  .genre-button {
+    background: var(--gradient-card);
+    border: 1px solid hsl(var(--border));
+    transition: all 0.3s ease;
+  }
+  
+  .genre-button:hover {
+    background: var(--gradient-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px hsl(var(--primary) / 0.3);
+  }
+  
+  .genre-button.active {
+    background: var(--gradient-primary);
+    box-shadow: 0 4px 16px hsl(var(--primary) / 0.4);
   }
 }
