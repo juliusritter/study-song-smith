@@ -42,17 +42,29 @@ serve(async (req) => {
     const record = data?.data;
     const status = record?.status ?? 'UNKNOWN';
     
-    // When status is PENDING, response is null
-    // When status is SUCCESS, response contains the song data
-    let songs = [];
-    if (record?.response && status === 'SUCCESS') {
-      // For successful generation, extract songs from response
-      songs = record.response.data || [];
+    // Extract songs from any success-like status
+    let songs: Array<{ id: string; audioUrl: string; title?: string; duration?: number }> = [];
+    const sunoData = record?.response?.sunoData ?? record?.response?.data ?? [];
+    if (Array.isArray(sunoData) && sunoData.length > 0) {
+      songs = sunoData
+        .map((t: any) => ({
+          id: t.id,
+          audioUrl: t.audioUrl || t.streamAudioUrl || t.sourceAudioUrl || t.sourceStreamAudioUrl || '',
+          title: t.title,
+          duration: t.duration,
+        }))
+        .filter((s) => !!s.audioUrl);
+    }
+
+    // Normalize status so the client can proceed when audio is ready
+    let effectiveStatus = status;
+    if ((status === 'FIRST_SUCCESS' || status === 'TEXT_SUCCESS' || status === 'SUCCESS') && songs.length > 0) {
+      effectiveStatus = 'SUCCESS';
     }
 
     return new Response(JSON.stringify({
       success: true,
-      data: { songs, status, taskId: record?.taskId }
+      data: { songs, status: effectiveStatus, taskId: record?.taskId }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

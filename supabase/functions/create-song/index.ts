@@ -91,6 +91,14 @@ serve(async (req) => {
     const lyrics = JSON.parse(lyricsData.choices[0].message.content);
     console.log('Lyrics generated');
 
+    // Build a robust prompt from lyrics (handles different shapes)
+    const builtPrompt = Array.isArray(lyrics?.lyrics)
+      ? lyrics.lyrics.join('\n')
+      : [lyrics?.verse1, lyrics?.chorus, lyrics?.verse2, lyrics?.bridge]
+          .filter((p) => typeof p === 'string' && p.trim().length > 0)
+          .join('\n\n');
+    console.log('Built prompt length:', builtPrompt?.length || 0);
+
     // Step 3: Create song with Suno
     console.log('Creating song with Suno...');
     const sunoResponse = await fetch('https://api.sunoapi.org/api/v1/generate', {
@@ -102,11 +110,10 @@ serve(async (req) => {
       body: JSON.stringify({
         customMode: true,
         instrumental: false,
-        model: 'V3_5',
-        prompt: `${lyrics.verse1 || ''}\n\n${lyrics.chorus || ''}\n\n${lyrics.verse2 || ''}`,
+        model: 'V4_5', // Use newer chirp model (auk/aurk equivalent)
+        prompt: builtPrompt || '',
         style: genre,
-        title: summary.title || 'Study Song',
-        callBackUrl: `${req.headers.get('origin') || 'https://localhost:3000'}/api/callback`
+        title: summary.title || 'Study Song'
       }),
     });
 
