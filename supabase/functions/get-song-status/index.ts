@@ -22,15 +22,12 @@ serve(async (req) => {
       throw new Error('Suno API key not configured');
     }
 
-    const response = await fetch('https://api.sunoapi.org/api/v1/get', {
-      method: 'POST',
+    const response = await fetch(`https://api.sunoapi.org/api/v1/generate/record-info?taskId=${encodeURIComponent(taskId)}`, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${SUNO_API_KEY}`,
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        taskId: taskId
-      }),
+      }
     });
 
     if (!response.ok) {
@@ -40,11 +37,16 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('Song status response:', data);
+    console.log('Song status raw response:', data);
+
+    const record = data?.data;
+    const songs = record?.response?.data ?? [];
+    const status = record?.status ?? 'UNKNOWN';
 
     return new Response(JSON.stringify({
       success: true,
-      data: data.data
+      data: songs,
+      status
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
