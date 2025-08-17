@@ -40,13 +40,19 @@ serve(async (req) => {
     console.log('Song status raw response:', data);
 
     const record = data?.data;
-    const songs = record?.response?.data ?? [];
     const status = record?.status ?? 'UNKNOWN';
+    
+    // When status is PENDING, response is null
+    // When status is SUCCESS, response contains the song data
+    let songs = [];
+    if (record?.response && status === 'SUCCESS') {
+      // For successful generation, extract songs from response
+      songs = record.response.data || [];
+    }
 
     return new Response(JSON.stringify({
       success: true,
-      data: songs,
-      status
+      data: { songs, status, taskId: record?.taskId }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

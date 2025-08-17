@@ -49,7 +49,7 @@ const Index = () => {
         const statusResult = await getSongStatus(result.taskId);
         console.log('Status check:', statusResult);
         
-        if (statusResult.success && statusResult.data?.songs?.length > 0) {
+        if (statusResult.success && statusResult.data?.status === 'SUCCESS' && statusResult.data?.songs?.length > 0) {
           const song = statusResult.data.songs[0];
           if (song.audioUrl) {
             setSongData({ 
@@ -108,7 +108,7 @@ const Index = () => {
         const statusResult = await getSongStatus(result.taskId);
         console.log('Status check:', statusResult);
         
-        if (statusResult.success && statusResult.data?.songs?.length > 0) {
+        if (statusResult.success && statusResult.data?.status === 'SUCCESS' && statusResult.data?.songs?.length > 0) {
           const song = statusResult.data.songs[0];
           if (song.audioUrl) {
             setSongData({ 
