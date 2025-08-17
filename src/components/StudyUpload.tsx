@@ -91,7 +91,7 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-3">
           <Music className="w-8 h-8 text-primary" />
-          <h1 className="text-4xl font-bold gradient-text">Beathoven</h1>
+          <h1 className="text-4xl font-bold gradient-text">StudySongs</h1>
         </div>
         <p className="text-lg text-muted-foreground">
           Transform any PDF into a catchy study song you can learn at the gym
