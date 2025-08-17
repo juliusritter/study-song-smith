@@ -16,10 +16,15 @@ serve(async (req) => {
   }
 
   try {
-    const { text, genre, referenceArtist } = await req.json();
-    console.log('Creating song with genre:', genre, 'referenceArtist:', referenceArtist);
+    console.log('=== CREATE SONG FUNCTION STARTED ===');
+    const body = await req.json();
+    console.log('Request body:', JSON.stringify(body));
+    
+    const { text, genre, referenceArtist } = body;
+    console.log('Parsed params - genre:', genre, 'referenceArtist:', referenceArtist);
 
     if (!OPENAI_API_KEY || !SUNO_API_KEY) {
+      console.error('Missing API keys - OpenAI:', !!OPENAI_API_KEY, 'Suno:', !!SUNO_API_KEY);
       throw new Error('API keys not configured');
     }
 
@@ -54,7 +59,21 @@ serve(async (req) => {
     }
 
     const summaryData = await summaryResponse.json();
-    const summary = JSON.parse(summaryData.choices[0].message.content);
+    console.log('Raw OpenAI summary response:', JSON.stringify(summaryData));
+    
+    let summary;
+    try {
+      summary = JSON.parse(summaryData.choices[0].message.content);
+    } catch (parseError) {
+      console.error('Failed to parse summary JSON:', parseError);
+      console.error('Raw content:', summaryData.choices[0].message.content);
+      // Fallback summary
+      summary = {
+        title: 'Study Song',
+        key_points: ['Study material summary'],
+        glossary_terms: []
+      };
+    }
     console.log('Summary generated:', summary.title);
 
     // Step 2: Generate lyrics with OpenAI
@@ -88,7 +107,19 @@ serve(async (req) => {
     }
 
     const lyricsData = await lyricsResponse.json();
-    const lyrics = JSON.parse(lyricsData.choices[0].message.content);
+    console.log('Raw OpenAI lyrics response:', JSON.stringify(lyricsData));
+    
+    let lyrics;
+    try {
+      lyrics = JSON.parse(lyricsData.choices[0].message.content);
+    } catch (parseError) {
+      console.error('Failed to parse lyrics JSON:', parseError);
+      console.error('Raw content:', lyricsData.choices[0].message.content);
+      // Fallback lyrics
+      lyrics = {
+        lyrics: [`Study song about ${summary?.title || 'learning'}`]
+      };
+    }
     console.log('Lyrics generated');
 
     // Build a robust prompt from lyrics - handle different possible structures
