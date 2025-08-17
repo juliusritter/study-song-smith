@@ -23,6 +23,10 @@ interface SunoResultResponse {
   };
 }
 
+function sanitizeSunoKey(key: string) {
+  return key.trim().split(/\s+/)[0];
+}
+
 export async function generateSong(
   title: string,
   lyrics: string,
@@ -31,11 +35,17 @@ export async function generateSong(
   apiKey: string
 ): Promise<string> {
   // Step 1: Generate the song
+  const sunoAuth = sanitizeSunoKey(apiKey);
+  if (sunoAuth.startsWith('sk-')) {
+    throw new Error('The Suno API key looks like an OpenAI key (starts with sk-). Please paste your Suno key in the Suno field.');
+  }
+
   const generateResponse = await fetch('https://api.sunoapi.org/api/v1/generate', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${sunoAuth}`,
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
     body: JSON.stringify({
       customMode: true,
@@ -51,8 +61,16 @@ export async function generateSong(
     throw new Error(`Suno API generate error: ${generateResponse.statusText}`);
   }
 
-  const generateData: SunoGenerateResponse = await generateResponse.json();
-  const taskId = generateData.data.taskId;
+  const generateData: any = await generateResponse.json();
+  if (typeof generateData?.code === 'number' && generateData.code !== 0) {
+    throw new Error(`Suno generate failed (${generateData.code}): ${generateData.msg || generateData.message || 'Unauthorized or plan limit reached'}`);
+  }
+
+  const taskId = generateData?.data?.taskId ?? generateData?.data?.task_id;
+  if (!taskId) {
+    console.error('Unexpected Suno generate response', generateData);
+    throw new Error('Suno generate did not return a taskId. Please verify your Suno API key.');
+  }
 
   // Step 2: Poll for result
   let attempts = 0;
@@ -65,7 +83,8 @@ export async function generateSong(
       `https://api.sunoapi.org/api/v1/generate/record-info?taskId=${taskId}`,
       {
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${sunoAuth}`,
+          'Accept': 'application/json',
         },
       }
     );
@@ -74,16 +93,23 @@ export async function generateSong(
       throw new Error(`Suno API result error: ${resultResponse.statusText}`);
     }
 
-    const resultData: SunoResultResponse = await resultResponse.json();
+    const resultData: any = await resultResponse.json();
     
-    if (resultData.data.status === 'SUCCESS' || resultData.data.status === 'FIRST_SUCCESS') {
+    if (typeof resultData?.code === 'number' && resultData.code !== 0) {
+      throw new Error(`Suno result failed (${resultData.code}): ${resultData.msg || resultData.message || 'Unknown error'}`);
+    }
+
+    const status = resultData?.data?.status;
+    if (status === 'SUCCESS' || status === 'FIRST_SUCCESS' || status === 'TEXT_SUCCESS') {
       // Return the first track's audio URL
-      if (resultData.data.response.sunoData.length > 0) {
-        return resultData.data.response.sunoData[0].audioUrl;
+      const tracks = resultData?.data?.response?.sunoData || [];
+      const firstUrl = tracks[0]?.audioUrl || tracks[0]?.streamAudioUrl;
+      if (firstUrl) {
+        return firstUrl;
       }
     }
     
-    if (resultData.data.status === 'FAILED') {
+    if (status === 'FAILED') {
       throw new Error('Song generation failed');
     }
     
