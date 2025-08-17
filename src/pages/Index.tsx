@@ -76,7 +76,7 @@ const Index = () => {
       console.log('Extracted PDF text length:', pdfText.length);
       
       // Create song using edge function
-      const result = await createSong(pdfText, selectedGenre);
+      const result = await createSong(pdfText, selectedGenre, referenceArtist);
       console.log('Song creation result:', result);
       
       if (!result.success || !result.taskId) {

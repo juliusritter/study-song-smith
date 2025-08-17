@@ -16,8 +16,8 @@ serve(async (req) => {
   }
 
   try {
-    const { text, genre } = await req.json();
-    console.log('Creating song with genre:', genre);
+    const { text, genre, referenceArtist } = await req.json();
+    console.log('Creating song with genre:', genre, 'referenceArtist:', referenceArtist);
 
     if (!OPENAI_API_KEY || !SUNO_API_KEY) {
       throw new Error('API keys not configured');
@@ -118,18 +118,28 @@ serve(async (req) => {
 
     // Step 3: Create song with Suno
     console.log('Creating song with Suno...');
+    const styleString = (typeof genre === 'string' && genre.trim().length > 0)
+      ? (typeof referenceArtist === 'string' && referenceArtist.trim().length > 0
+          ? `${genre} inspired by ${referenceArtist}`
+          : genre)
+      : genre;
+    const finalPrompt = builtPrompt + (typeof referenceArtist === 'string' && referenceArtist.trim().length > 0
+      ? `\n\nReference vibe: inspired by ${referenceArtist}; energetic, study-friendly; clear enunciation; verse/chorus/bridge structure.`
+      : '');
+    console.log('Using style:', styleString);
     const sunoResponse = await fetch('https://api.sunoapi.org/api/v1/generate', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${SUNO_API_KEY}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({
         customMode: true,
         instrumental: false,
-        model: 'V4_5', // Use newer chirp model (auk/aurk equivalent)
-        prompt: builtPrompt || '',
-        style: genre,
+        model: 'V4_5',
+        prompt: finalPrompt,
+        style: styleString,
         title: summary.title || 'Study Song'
       }),
     });

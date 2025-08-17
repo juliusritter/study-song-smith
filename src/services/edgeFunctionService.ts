@@ -14,10 +14,10 @@ export interface SongStatusResponse {
   error?: string;
 }
 
-export const createSong = async (text: string, genre: string): Promise<CreateSongResponse> => {
+export const createSong = async (text: string, genre: string, referenceArtist?: string): Promise<CreateSongResponse> => {
   try {
     const { data, error } = await supabase.functions.invoke('create-song', {
-      body: { text, genre }
+      body: { text, genre, referenceArtist }
     });
 
     if (error) {
