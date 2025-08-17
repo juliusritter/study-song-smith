@@ -67,9 +67,11 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
     const value = e.target.value;
     setInputValue(value);
     
-    // Auto-detect if input looks like a URL
-    if (value.startsWith('http://') || value.startsWith('https://')) {
+    // Auto-detect if input looks like a URL (must be at least 8 characters and contain valid URL structure)
+    if (value.length >= 8 && (value.startsWith('http://') || value.startsWith('https://')) && value.includes('.')) {
       setInputType('url');
+    } else if (value.length < 8 || (!value.startsWith('http://') && !value.startsWith('https://'))) {
+      setInputType('file');
     }
   };
 
@@ -91,7 +93,7 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-3">
           <Music className="w-8 h-8 text-primary" />
-          <h1 className="text-4xl font-bold gradient-text">StudySongs</h1>
+          <h1 className="text-4xl font-bold gradient-text">Beathoven</h1>
         </div>
         <p className="text-lg text-muted-foreground">
           Transform any PDF into a catchy study song you can learn at the gym
