@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import StudyUpload from '@/components/StudyUpload';
 import GenreSelector from '@/components/GenreSelector';
 import SongResults from '@/components/SongResults';
@@ -28,6 +28,13 @@ const Index = () => {
   const [results, setResults] = useState<any>(null);
   const [processingStep, setProcessingStep] = useState<string>('');
 
+  // Hydrate keys from localStorage if present so users can skip the API key step
+  useEffect(() => {
+    const storedOpenAI = localStorage.getItem('openai_key') || '';
+    const storedSuno = localStorage.getItem('suno_key') || '';
+    if (storedOpenAI) setOpenaiKey(storedOpenAI);
+    if (storedSuno) setSunoKey(storedSuno);
+  }, []);
   const handleApiKeysSet = (openai: string, suno: string) => {
     setOpenaiKey(openai);
     setSunoKey(suno);
