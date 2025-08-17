@@ -63,11 +63,14 @@ const SongResults = ({ audioUrl, lyrics, onCreateAnother }: SongResultsProps) =>
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const audio = audioRef.current;
-    if (!audio || duration === 0) return;
+    if (!audio || !duration || !isFinite(duration) || duration === 0) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const percent = (e.clientX - rect.left) / rect.width;
     const newTime = percent * duration;
+    
+    // Ensure newTime is finite and within valid range
+    if (!isFinite(newTime) || newTime < 0 || newTime > duration) return;
     
     audio.currentTime = newTime;
     setCurrentTime(newTime);
