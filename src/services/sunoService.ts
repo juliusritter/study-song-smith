@@ -53,7 +53,8 @@ export async function generateSong(
       title,
       style: genre,
       prompt: `${lyrics}\n\nReference vibe: inspired by ${referenceArtist}; energetic, study-friendly; clear enunciation; verse/chorus/bridge structure.`,
-      model: 'V4_5'
+      model: 'V4_5',
+      callBackUrl: 'https://example.com/callback'
     }),
   });
 
@@ -62,7 +63,7 @@ export async function generateSong(
   }
 
   const generateData: any = await generateResponse.json();
-  if (typeof generateData?.code === 'number' && generateData.code !== 0) {
+  if (typeof generateData?.code === 'number' && generateData.code !== 200) {
     throw new Error(`Suno generate failed (${generateData.code}): ${generateData.msg || generateData.message || 'Unauthorized or plan limit reached'}`);
   }
 
@@ -95,7 +96,7 @@ export async function generateSong(
 
     const resultData: any = await resultResponse.json();
     
-    if (typeof resultData?.code === 'number' && resultData.code !== 0) {
+    if (typeof resultData?.code === 'number' && resultData.code !== 200) {
       throw new Error(`Suno result failed (${resultData.code}): ${resultData.msg || resultData.message || 'Unknown error'}`);
     }
 
