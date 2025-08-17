@@ -76,6 +76,23 @@ const SongResults = ({ audioUrl, lyrics, onCreateAnother }: SongResultsProps) =>
     setCurrentTime(newTime);
   };
 
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(audioUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${lyrics.title}.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
+  };
+
   const getSectionIcon = (type: string) => {
     switch (type) {
       case 'verse': return '🎵';
@@ -135,11 +152,9 @@ const SongResults = ({ audioUrl, lyrics, onCreateAnother }: SongResultsProps) =>
 
           {/* Action Buttons */}
           <div className="flex justify-center gap-4">
-            <Button variant="outline" asChild>
-              <a href={audioUrl} download={`${lyrics.title}.mp3`}>
-                <Download className="w-4 h-4" />
-                Download
-              </a>
+            <Button variant="outline" onClick={handleDownload}>
+              <Download className="w-4 h-4" />
+              Download
             </Button>
             <Button variant="outline" onClick={onCreateAnother}>
               <RotateCcw className="w-4 h-4" />
