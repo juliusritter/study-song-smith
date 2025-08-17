@@ -67,11 +67,9 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
     const value = e.target.value;
     setInputValue(value);
     
-    // Auto-detect if input looks like a URL (must be at least 8 characters and contain valid URL structure)
-    if (value.length >= 8 && (value.startsWith('http://') || value.startsWith('https://')) && value.includes('.')) {
+    // Keep as URL input unless user selects a file - don't auto-switch to file mode
+    if (inputType !== 'file') {
       setInputType('url');
-    } else if (value.length < 8 || (!value.startsWith('http://') && !value.startsWith('https://'))) {
-      setInputType('file');
     }
   };
 
