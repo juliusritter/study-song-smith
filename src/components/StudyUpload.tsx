@@ -67,8 +67,8 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
     const value = e.target.value;
     setInputValue(value);
     
-    // Keep as URL input unless user selects a file - don't auto-switch to file mode
-    if (inputType !== 'file') {
+    // Auto-detect if input looks like a URL
+    if (value.startsWith('http://') || value.startsWith('https://')) {
       setInputType('url');
     }
   };
@@ -91,7 +91,7 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-3">
           <Music className="w-8 h-8 text-primary" />
-          <h1 className="text-4xl font-bold gradient-text">Beathoven</h1>
+          <h1 className="text-4xl font-bold gradient-text">StudySongs</h1>
         </div>
         <p className="text-lg text-muted-foreground">
           Transform any PDF into a catchy study song you can learn at the gym
@@ -107,7 +107,7 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => !inputValue && inputType !== 'url' && openFilePicker()}
+          onClick={() => !inputValue && openFilePicker()}
         >
           {inputValue ? (
             <div className="space-y-4">
