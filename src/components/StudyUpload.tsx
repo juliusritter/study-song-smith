@@ -7,8 +7,8 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 
 interface StudyUploadProps {
-  onFileUpload: (file: File) => void;
-  onUrlSubmit: (url: string) => void;
+  onFileUpload: (file: File, genre?: string) => void;
+  onUrlSubmit: (url: string, genre?: string) => void;
   isProcessing?: boolean;
 }
 
@@ -37,7 +37,7 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
     const pdfFile = files.find(file => file.type === 'application/pdf');
     
     if (pdfFile) {
-      onFileUpload(pdfFile);
+      onFileUpload(pdfFile, 'Educational Pop');
       setInputType('file');
       setInputValue(pdfFile.name);
     } else {
@@ -52,7 +52,7 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type === 'application/pdf') {
-      onFileUpload(file);
+      onFileUpload(file, 'Educational Pop');
       setInputType('file');
       setInputValue(file.name);
     } else {
@@ -78,7 +78,7 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
     if (!inputValue.trim()) return;
     
     if (inputType === 'url') {
-      onUrlSubmit(inputValue);
+      onUrlSubmit(inputValue, 'Educational Pop');
     }
   };
 
