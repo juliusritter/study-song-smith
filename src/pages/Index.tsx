@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import StudyUpload from '@/components/StudyUpload';
 import GenreSelector from '@/components/GenreSelector';
 import SongResults from '@/components/SongResults';
-import ApiKeyInput from '@/components/ApiKeyInput';
+
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { extractTextFromPDF, extractTextFromURL } from '@/services/pdfProcessor';
@@ -10,36 +10,19 @@ import { summarizeTextForLearning, generateLyrics } from '@/services/openaiServi
 import { generateSong } from '@/services/sunoService';
 import { toast } from '@/hooks/use-toast';
 
-type Step = 'apikeys' | 'upload' | 'configure' | 'processing' | 'results';
+type Step = 'upload' | 'configure' | 'processing' | 'results';
 
 const Index = () => {
-  const [currentStep, setCurrentStep] = useState<Step>(() => {
-    const hasKeys = localStorage.getItem('openai_key') && localStorage.getItem('suno_key');
-    return hasKeys ? 'upload' : 'apikeys';
-  });
+  const [currentStep, setCurrentStep] = useState<Step>('upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [selectedGenre, setSelectedGenre] = useState<string>('');
   const [referenceArtist, setReferenceArtist] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [openaiKey, setOpenaiKey] = useState('');
-  const [sunoKey, setSunoKey] = useState('');
   const [processedText, setProcessedText] = useState<string>('');
   const [results, setResults] = useState<any>(null);
   const [processingStep, setProcessingStep] = useState<string>('');
 
-  // Hydrate keys from localStorage if present so users can skip the API key step
-  useEffect(() => {
-    const storedOpenAI = localStorage.getItem('openai_key') || '';
-    const storedSuno = localStorage.getItem('suno_key') || '';
-    if (storedOpenAI) setOpenaiKey(storedOpenAI);
-    if (storedSuno) setSunoKey(storedSuno);
-  }, []);
-  const handleApiKeysSet = (openai: string, suno: string) => {
-    setOpenaiKey(openai);
-    setSunoKey(suno);
-    setCurrentStep('upload');
-  };
 
   const handleFileUpload = async (file: File) => {
     try {
@@ -84,7 +67,7 @@ const Index = () => {
   };
 
   const handleCreateSong = async () => {
-    if (!selectedGenre || !processedText || !openaiKey || !sunoKey) return;
+    if (!selectedGenre || !processedText) return;
     
     setIsProcessing(true);
     setCurrentStep('processing');
@@ -92,11 +75,11 @@ const Index = () => {
     try {
       // Step 1: Summarize the text
       setProcessingStep('Analyzing and summarizing content...');
-      const summary = await summarizeTextForLearning(processedText, openaiKey);
+      const summary = await summarizeTextForLearning(processedText);
       
       // Step 2: Generate lyrics
       setProcessingStep('Creating catchy lyrics...');
-      const lyricsResult = await generateLyrics(summary, openaiKey);
+      const lyricsResult = await generateLyrics(summary);
       
       // Step 3: Generate song
       setProcessingStep('Generating your study song...');
@@ -108,8 +91,7 @@ const Index = () => {
         lyricsResult.title,
         lyricsText,
         selectedGenre,
-        referenceArtist || 'Taylor Swift',
-        sunoKey
+        referenceArtist || 'Taylor Swift'
       );
       
       setResults({
@@ -147,7 +129,7 @@ const Index = () => {
   const goBack = () => {
     switch (currentStep) {
       case 'upload':
-        setCurrentStep('apikeys');
+        // Already at the start
         break;
       case 'configure':
         setCurrentStep('upload');
@@ -165,7 +147,7 @@ const Index = () => {
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Back Button */}
-        {currentStep !== 'apikeys' && (
+        {currentStep !== 'upload' && (
           <div className="mb-8">
             <Button
               variant="ghost"
@@ -179,9 +161,6 @@ const Index = () => {
         )}
 
         {/* Step Content */}
-        {currentStep === 'apikeys' && (
-          <ApiKeyInput onApiKeysSet={handleApiKeysSet} />
-        )}
 
         {currentStep === 'upload' && (
           <StudyUpload
