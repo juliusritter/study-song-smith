@@ -240,6 +240,66 @@ const Index = () => {
       )}
         </div>
       </div>
+
+      {/* How It Works Section */}
+      <div className="bg-secondary/20 py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <h3 className="text-xl font-semibold mb-4">Content Processing</h3>
+                <ul className="space-y-3 text-muted-foreground">
+                  <li className="flex items-start gap-3">
+                    <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                    <span>Extracts text content from your PDF using advanced PDF parsing</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                    <span>Analyzes and summarizes key concepts using OpenAI GPT models</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                    <span>Identifies the most important information for memorization</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                    <span>Structures content into verse-chorus format for better retention</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="space-y-6">
+                <h3 className="text-xl font-semibold mb-4">Music Generation</h3>
+                <ul className="space-y-3 text-muted-foreground">
+                  <li className="flex items-start gap-3">
+                    <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                    <span>Generates catchy lyrics that incorporate your study material</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                    <span>Uses Suno AI to create professional-quality music in your chosen genre</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                    <span>Matches tempo and style to optimize learning and memorization</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
+                    <span>Delivers a complete song you can listen to anywhere</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="mt-12 text-center">
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Powered by <span className="font-semibold">OpenAI GPT</span> for intelligent content analysis and <span className="font-semibold">Suno AI</span> for professional music generation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

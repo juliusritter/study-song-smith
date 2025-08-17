@@ -107,7 +107,7 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => !inputValue && openFilePicker()}
+          onClick={() => !inputValue && inputType !== 'url' && openFilePicker()}
         >
           {inputValue ? (
             <div className="space-y-4">
