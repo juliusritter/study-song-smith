@@ -1,159 +1,159 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import StudyUpload from '@/components/StudyUpload';
 import GenreSelector from '@/components/GenreSelector';
 import SongResults from '@/components/SongResults';
-import ApiKeyInput from '@/components/ApiKeyInput';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { extractTextFromPDF, extractTextFromURL } from '@/services/pdfProcessor';
-import { summarizeTextForLearning, generateLyrics } from '@/services/openaiService';
-import { generateSong } from '@/services/sunoService';
-import { toast } from '@/hooks/use-toast';
-
-type Step = 'apikeys' | 'upload' | 'configure' | 'processing' | 'results';
+import { extractTextFromPDF } from '@/services/pdfProcessor';
+import { createSong, getSongStatus } from '@/services/edgeFunctionService';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
-  const [currentStep, setCurrentStep] = useState<Step>(() => {
-    const hasKeys = localStorage.getItem('openai_key') && localStorage.getItem('suno_key');
-    return hasKeys ? 'upload' : 'apikeys';
-  });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [currentStep, setCurrentStep] = useState<'upload' | 'configure' | 'processing' | 'results'>('upload');
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string>('');
+  const [extractedText, setExtractedText] = useState<string>('');
   const [selectedGenre, setSelectedGenre] = useState<string>('');
   const [referenceArtist, setReferenceArtist] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [openaiKey, setOpenaiKey] = useState('');
-  const [sunoKey, setSunoKey] = useState('');
-  const [processedText, setProcessedText] = useState<string>('');
-  const [results, setResults] = useState<any>(null);
-  const [processingStep, setProcessingStep] = useState<string>('');
-
-  // Hydrate keys from localStorage if present so users can skip the API key step
-  useEffect(() => {
-    const storedOpenAI = localStorage.getItem('openai_key') || '';
-    const storedSuno = localStorage.getItem('suno_key') || '';
-    if (storedOpenAI) setOpenaiKey(storedOpenAI);
-    if (storedSuno) setSunoKey(storedSuno);
-  }, []);
-  const handleApiKeysSet = (openai: string, suno: string) => {
-    setOpenaiKey(openai);
-    setSunoKey(suno);
-    setCurrentStep('upload');
-  };
+  const [songResults, setSongResults] = useState<any>(null);
+  const { toast } = useToast();
 
   const handleFileUpload = async (file: File) => {
     try {
-      setIsProcessing(true);
-      setProcessingStep('Extracting text from PDF...');
       const text = await extractTextFromPDF(file);
-      setProcessedText(text);
-      setSelectedFile(file);
+      setExtractedText(text);
+      setUploadedFile(file);
       setCurrentStep('configure');
-      toast({ title: 'PDF processed successfully!' });
-    } catch (error) {
-      toast({ 
-        title: 'Error processing PDF', 
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive'
+      
+      toast({
+        title: "PDF processed successfully!",
+        description: "Now choose your music style"
       });
-    } finally {
-      setIsProcessing(false);
-      setProcessingStep('');
+    } catch (error) {
+      toast({
+        title: "Error processing PDF",
+        description: error instanceof Error ? error.message : "Failed to process PDF",
+        variant: "destructive"
+      });
     }
   };
 
   const handleUrlSubmit = async (url: string) => {
     try {
-      setIsProcessing(true);
-      setProcessingStep('Extracting text from PDF URL...');
-      const text = await extractTextFromURL(url);
-      setProcessedText(text);
+      const text = await extractTextFromPDF(url as any); // PDF processor handles URLs too
+      setExtractedText(text);
       setPdfUrl(url);
       setCurrentStep('configure');
-      toast({ title: 'PDF URL processed successfully!' });
-    } catch (error) {
-      toast({ 
-        title: 'Error processing PDF URL', 
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive'
+      
+      toast({
+        title: "PDF URL processed successfully!",
+        description: "Now choose your music style"
       });
-    } finally {
-      setIsProcessing(false);
-      setProcessingStep('');
+    } catch (error) {
+      toast({
+        title: "Error processing PDF URL",
+        description: error instanceof Error ? error.message : "Failed to process PDF URL",
+        variant: "destructive"
+      });
     }
   };
 
   const handleCreateSong = async () => {
-    if (!selectedGenre || !processedText || !openaiKey || !sunoKey) return;
+    if (!extractedText || !selectedGenre) return;
     
     setIsProcessing(true);
     setCurrentStep('processing');
     
     try {
-      // Step 1: Summarize the text
-      setProcessingStep('Analyzing and summarizing content...');
-      const summary = await summarizeTextForLearning(processedText, openaiKey);
+      // Step 1: Create song using edge function
+      toast({
+        title: "Creating your song...",
+        description: "Analyzing content and generating music"
+      });
       
-      // Step 2: Generate lyrics
-      setProcessingStep('Creating catchy lyrics...');
-      const lyricsResult = await generateLyrics(summary, openaiKey);
+      const response = await createSong(extractedText, selectedGenre);
       
-      // Step 3: Generate song
-      setProcessingStep('Generating your study song...');
-      const lyricsText = lyricsResult.lyrics.sections
-        .map(section => section.lines.join('\n'))
-        .join('\n\n');
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to create song');
+      }
       
-      const audioUrl = await generateSong(
-        lyricsResult.title,
-        lyricsText,
-        selectedGenre,
-        referenceArtist || 'Taylor Swift',
-        sunoKey
-      );
+      // Step 2: Poll for completion
+      let songDetails = null;
+      let attempts = 0;
+      const maxAttempts = 60; // 5 minutes max
       
-      setResults({
-        audioUrl,
-        lyrics: lyricsResult.lyrics
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+        
+        try {
+          const statusResponse = await getSongStatus(response.taskId!);
+          
+          if (statusResponse.success && statusResponse.data && statusResponse.data.length > 0) {
+            const song = statusResponse.data[0];
+            if (song.audio_url) {
+              songDetails = statusResponse.data;
+              break;
+            }
+          }
+        } catch (error) {
+          console.log('Still processing...', error);
+        }
+        
+        attempts++;
+        
+        if (attempts % 6 === 0) { // Every 30 seconds
+          toast({
+            title: "Still creating...",
+            description: `Please wait, this can take up to 5 minutes`
+          });
+        }
+      }
+      
+      if (!songDetails || songDetails.length === 0 || !songDetails[0].audio_url) {
+        throw new Error('Song generation timed out or failed');
+      }
+      
+      setSongResults({
+        summary: response.summary,
+        lyrics: response.lyrics,
+        songs: songDetails
       });
       
       setCurrentStep('results');
-      toast({ title: 'Study song created successfully!' });
+      
+      toast({
+        title: "Success!",
+        description: "Your study song has been created"
+      });
+      
     } catch (error) {
-      toast({ 
-        title: 'Error creating song', 
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive'
+      console.error('Error creating song:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create song",
+        variant: "destructive"
       });
       setCurrentStep('configure');
     } finally {
       setIsProcessing(false);
-      setProcessingStep('');
     }
   };
 
   const handleStartOver = () => {
     setCurrentStep('upload');
-    setSelectedFile(null);
+    setUploadedFile(null);
     setPdfUrl('');
+    setExtractedText('');
     setSelectedGenre('');
     setReferenceArtist('');
-    setProcessedText('');
-    setResults(null);
-    setIsProcessing(false);
-    setProcessingStep('');
+    setSongResults(null);
   };
 
   const goBack = () => {
     switch (currentStep) {
-      case 'upload':
-        setCurrentStep('apikeys');
-        break;
       case 'configure':
         setCurrentStep('upload');
-        break;
-      case 'processing':
-        setCurrentStep('configure');
         break;
       case 'results':
         setCurrentStep('configure');
@@ -162,79 +162,83 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Back Button */}
-        {currentStep !== 'apikeys' && (
-          <div className="mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
+              StudySong AI
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Transform your study materials into memorable songs
+            </p>
+          </div>
+
+      {/* Back Button */}
+      {currentStep !== 'upload' && currentStep !== 'processing' && (
+        <Button
+          variant="ghost"
+          onClick={goBack}
+          className="mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+      )}
+
+      {/* Step Content */}
+      {currentStep === 'upload' && (
+        <StudyUpload
+          onFileUpload={handleFileUpload}
+          onUrlSubmit={handleUrlSubmit}
+        />
+      )}
+
+      {currentStep === 'configure' && (
+        <div className="space-y-8">
+          <GenreSelector
+            selectedGenre={selectedGenre}
+            onGenreChange={setSelectedGenre}
+            referenceArtist={referenceArtist}
+            onReferenceArtistChange={setReferenceArtist}
+          />
+          
+          <div className="text-center">
             <Button
-              variant="ghost"
-              onClick={goBack}
-              className="text-muted-foreground hover:text-foreground"
+              onClick={handleCreateSong}
+              disabled={!selectedGenre || !extractedText}
+              size="lg"
+              className="px-8"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Back
+              Create My Study Song
             </Button>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Step Content */}
-        {currentStep === 'apikeys' && (
-          <ApiKeyInput onApiKeysSet={handleApiKeysSet} />
-        )}
-
-        {currentStep === 'upload' && (
-          <StudyUpload
-            onFileUpload={handleFileUpload}
-            onUrlSubmit={handleUrlSubmit}
-            isProcessing={isProcessing}
-          />
-        )}
-
-        {currentStep === 'configure' && (
-          <div className="space-y-8">
-            <GenreSelector
-              selectedGenre={selectedGenre}
-              onGenreChange={setSelectedGenre}
-              referenceArtist={referenceArtist}
-              onReferenceArtistChange={setReferenceArtist}
-            />
-            
-            <div className="text-center">
-              <Button
-                variant="hero"
-                size="lg"
-                onClick={handleCreateSong}
-                disabled={!selectedGenre || !processedText || isProcessing}
-                className="min-w-48"
-              >
-                Create My Study Song
-              </Button>
-            </div>
+      {currentStep === 'processing' && (
+        <div className="text-center space-y-6">
+          <div className="flex justify-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
           </div>
-        )}
-
-        {currentStep === 'processing' && (
-          <div className="text-center space-y-8">
-            <div>
-              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center animate-pulse">
-                <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-              </div>
-              <h2 className="text-2xl font-bold mb-2">Creating your study song...</h2>
-              <p className="text-muted-foreground">
-                {processingStep || 'Processing...'}
-              </p>
-            </div>
+          <div>
+            <h2 className="text-2xl font-semibold mb-2">Creating your study song...</h2>
+            <p className="text-muted-foreground">
+              This may take a few minutes. We're analyzing your content and generating music.
+            </p>
           </div>
-        )}
+        </div>
+      )}
 
-        {currentStep === 'results' && results && (
-          <SongResults
-            audioUrl={results.audioUrl}
-            lyrics={results.lyrics}
-            onCreateAnother={handleStartOver}
-          />
-        )}
+      {currentStep === 'results' && songResults && (
+        <SongResults
+          audioUrl={songResults.songs[0]?.audio_url || ''}
+          lyrics={songResults.lyrics}
+          onCreateAnother={handleStartOver}
+        />
+      )}
+        </div>
       </div>
     </div>
   );

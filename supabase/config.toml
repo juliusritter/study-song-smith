@@ -1,1 +1,7 @@
 project_id = "xtvtoowocispdntduphk"
+
+[functions.create-song]
+verify_jwt = false
+
+[functions.get-song-status]
+verify_jwt = false
