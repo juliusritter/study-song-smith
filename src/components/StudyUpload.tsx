@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Upload, Link, Music, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -68,8 +67,8 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
     const value = e.target.value;
     setInputValue(value);
     
-    // Only detect as URL if it's longer than 8 characters and contains a dot
-    if (value.length > 8 && value.includes('.') && (value.startsWith('http://') || value.startsWith('https://'))) {
+    // Auto-detect if input looks like a URL
+    if (value.startsWith('http://') || value.startsWith('https://')) {
       setInputType('url');
     }
   };
@@ -92,7 +91,7 @@ const StudyUpload = ({ onFileUpload, onUrlSubmit, isProcessing = false }: StudyU
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-3">
           <Music className="w-8 h-8 text-primary" />
-          <h1 className="text-4xl font-bold gradient-text">Beathoven</h1>
+          <h1 className="text-4xl font-bold gradient-text">StudySongs</h1>
         </div>
         <p className="text-lg text-muted-foreground">
           Transform any PDF into a catchy study song you can learn at the gym
