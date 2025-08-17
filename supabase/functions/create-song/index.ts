@@ -91,13 +91,30 @@ serve(async (req) => {
     const lyrics = JSON.parse(lyricsData.choices[0].message.content);
     console.log('Lyrics generated');
 
-    // Build a robust prompt from lyrics (handles different shapes)
-    const builtPrompt = Array.isArray(lyrics?.lyrics)
-      ? lyrics.lyrics.join('\n')
-      : [lyrics?.verse1, lyrics?.chorus, lyrics?.verse2, lyrics?.bridge]
-          .filter((p) => typeof p === 'string' && p.trim().length > 0)
-          .join('\n\n');
-    console.log('Built prompt length:', builtPrompt?.length || 0);
+    // Build a robust prompt from lyrics - handle different possible structures
+    let builtPrompt = '';
+    try {
+      if (Array.isArray(lyrics?.lyrics)) {
+        builtPrompt = lyrics.lyrics.join('\n');
+      } else if (typeof lyrics?.lyrics === 'string') {
+        builtPrompt = lyrics.lyrics;
+      } else {
+        // Fallback to verse/chorus structure
+        const parts = [lyrics?.verse1, lyrics?.chorus, lyrics?.verse2, lyrics?.bridge]
+          .filter(part => typeof part === 'string' && part.trim().length > 0);
+        builtPrompt = parts.join('\n\n');
+      }
+      
+      // Final fallback if nothing worked
+      if (!builtPrompt || builtPrompt.trim().length === 0) {
+        builtPrompt = `Study song about ${summary?.title || 'learning'}`;
+      }
+    } catch (error) {
+      console.error('Error building prompt:', error);
+      builtPrompt = `Study song about ${summary?.title || 'learning'}`;
+    }
+    
+    console.log('Built prompt length:', builtPrompt.length);
 
     // Step 3: Create song with Suno
     console.log('Creating song with Suno...');
